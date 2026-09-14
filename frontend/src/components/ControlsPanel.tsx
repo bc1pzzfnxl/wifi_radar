@@ -83,6 +83,39 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
           />
         </div>
 
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-zinc-500 font-medium">Room Radius (Max Range)</span>
+            <span className="text-zinc-950 font-bold font-mono text-xs">{config.max_range_m || 6} m</span>
+          </div>
+          <input
+            type="range"
+            min="2.0"
+            max="15.0"
+            step="0.5"
+            value={config.max_range_m || 6}
+            onChange={(e) => onUpdateConfig({ max_range_m: parseFloat(e.target.value) })}
+            className="w-full accent-zinc-950 bg-zinc-200/80 rounded-lg cursor-pointer h-1.5"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-1">
+          <span className="text-zinc-500 font-medium">Filter Outside Room</span>
+          <button
+            type="button"
+            onClick={() => onUpdateConfig({ filter_out_of_bounds: config.filter_out_of_bounds === false ? true : false })}
+            className={`w-9 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-200 ease-in-out ${
+              config.filter_out_of_bounds !== false ? 'bg-zinc-950' : 'bg-zinc-200'
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-xs transform transition-transform duration-200 ease-in-out ${
+                config.filter_out_of_bounds !== false ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
         <div className="pt-2">
           <Button
             variant="primary"

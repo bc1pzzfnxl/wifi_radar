@@ -84,8 +84,16 @@ export const RadarScope: React.FC<RadarScopeProps> = ({
         ctx.stroke();
       }
 
-      const rings = [2, 5, 10, 15];
-      rings.forEach((rDist) => {
+      const ringSteps = maxDistance <= 4
+        ? [1, 2, 3, maxDistance]
+        : maxDistance <= 7
+        ? [2, 4, maxDistance]
+        : maxDistance <= 10
+        ? [2, 5, maxDistance]
+        : [2, 5, 10, maxDistance];
+      const uniqueRings = Array.from(new Set(ringSteps.filter((v) => v <= maxDistance && v > 0)));
+
+      uniqueRings.forEach((rDist) => {
         const r = (rDist / maxDistance) * radius;
         ctx.beginPath();
         ctx.arc(center, center, r, 0, Math.PI * 2);

@@ -19,7 +19,9 @@ export const RadarDashboard: React.FC = () => {
     alert_threshold: 8.0,
     window_size: 30,
     ema_alpha: 0.05,
-    cooldown_seconds: 2.5
+    cooldown_seconds: 2.5,
+    max_range_m: 6.0,
+    filter_out_of_bounds: true
   });
   const [calibration, setCalibration] = useState<CalibrationStatus | null>(null);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
@@ -230,7 +232,7 @@ export const RadarDashboard: React.FC = () => {
               globalState={telemetry?.global_state || 'IDLE'}
               selectedTargetId={selectedTargetId}
               onSelectTarget={setSelectedTargetId}
-              maxDistance={15}
+              maxDistance={config.max_range_m || 6}
             />
           </Card>
           <div className="h-44 shrink-0">

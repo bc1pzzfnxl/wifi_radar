@@ -18,6 +18,7 @@ class RadarEngine:
         self.calibrating = False
         self.calib_samples = []
         self.calib_target = 50
+        self.calib_start = 0.0
 
     def _interface_exists(self) -> bool:
         return os.path.exists(f"/sys/class/net/{self.config.interface}")
@@ -52,29 +53,38 @@ class RadarEngine:
             self.start()
 
     def _on_packet(self, mac: str, rssi: float):
+        target, _, _ = self.dsp.process_packet(mac, rssi)
         if self.calibrating:
-            self.calib_samples.append(rssi)
-            if len(self.calib_samples) >= self.calib_target:
-                self._finish_calibration()
-        self.dsp.process_packet(mac, rssi)
+            if not self.config.filter_out_of_bounds or target.distance_m <= self.config.max_range_m:
+                self.calib_samples.append(target.delta_rssi)
+                if len(self.calib_samples) >= self.calib_target:
+                    self._finish_calibration()
 
-    def trigger_calibration(self, target_samples: int = 50):
+    def trigger_calibration(self, target_samples: int = 40):
         self.calibrating = True
         self.calib_target = target_samples
         self.calib_samples = []
+        self.calib_start = time.time()
 
     def _finish_calibration(self):
         self.calibrating = False
-        if not self.calib_samples:
+        if not self.calib_samples or len(self.calib_samples) < 5:
+            self.config.noise_threshold = 1.8
+            self.config.motion_threshold = 4.5
+            self.config.alert_threshold = 8.0
+            self.dsp.config = self.config
             return
         avg = sum(self.calib_samples) / len(self.calib_samples)
         variance = sum((x - avg) ** 2 for x in self.calib_samples) / max(1, len(self.calib_samples) - 1)
-        self.config.noise_threshold = round(max(1.0, variance * 1.5), 2)
-        self.config.motion_threshold = round(self.config.noise_threshold * 2.2, 2)
-        self.config.alert_threshold = round(self.config.noise_threshold * 4.0, 2)
+        base_noise = max(0.8, min(10.0, variance))
+        self.config.noise_threshold = round(base_noise * 1.5, 2)
+        self.config.motion_threshold = round(self.config.noise_threshold * 2.4, 2)
+        self.config.alert_threshold = round(self.config.noise_threshold * 4.2, 2)
         self.dsp.config = self.config
 
     def get_calibration_status(self) -> CalibrationStatus:
+        if self.calibrating and (time.time() - self.calib_start > 8.0):
+            self._finish_calibration()
         return CalibrationStatus(
             in_progress=self.calibrating,
             samples_collected=len(self.calib_samples),

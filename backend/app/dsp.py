@@ -72,6 +72,7 @@ class TargetTracker:
         self.state = PresenceState.IDLE
         self.last_state_change = time.time()
         self.last_seen = time.time()
+        self.distance_m = 1.0
         self.fixed_angle = (hash(target_id) % 360 + 360) % 360
 
     def add_sample(self, rssi: float) -> RadarTarget:
@@ -84,8 +85,14 @@ class TargetTracker:
         
         self.stats.update(delta)
         variance = self.stats.variance
+        distance = self._estimate_distance(rssi)
+        self.distance_m = distance
 
-        if variance > self.config.alert_threshold:
+        if distance > self.config.max_range_m:
+            candidate_state = PresenceState.IDLE
+        elif len(self.stats.samples) < 5:
+            candidate_state = PresenceState.IDLE
+        elif variance > self.config.alert_threshold:
             candidate_state = PresenceState.INTRUSION_ALERT
         elif variance > self.config.motion_threshold:
             candidate_state = PresenceState.MOTION_DETECTED
@@ -99,7 +106,6 @@ class TargetTracker:
                 self.state = candidate_state
                 self.last_state_change = now
 
-        distance = self._estimate_distance(rssi)
         zone = self._estimate_zone(distance)
         confidence = min(1.0, max(0.2, variance / (self.config.motion_threshold + 0.001)))
 
@@ -120,17 +126,18 @@ class TargetTracker:
 
     def _estimate_distance(self, rssi: float) -> float:
         tx_power_1m = -40.0
-        path_loss_exponent = 2.5
+        path_loss_exponent = 2.4
         exponent = (tx_power_1m - rssi) / (10.0 * path_loss_exponent)
         dist = math.pow(10.0, exponent)
-        return max(0.5, min(15.0, dist))
+        return round(max(0.5, dist), 2)
 
     def _estimate_zone(self, distance: float) -> DistanceZone:
-        if distance < 2.0:
+        max_r = self.config.max_range_m
+        if distance < max_r * 0.25:
             return DistanceZone.IMMEDIATE
-        elif distance < 5.0:
+        elif distance < max_r * 0.55:
             return DistanceZone.NEAR
-        elif distance < 10.0:
+        elif distance < max_r * 0.85:
             return DistanceZone.MID
         return DistanceZone.FAR
 
@@ -143,7 +150,10 @@ class SignalProcessor:
 
     @property
     def global_variance(self) -> float:
-        active_vars = [t.stats.variance for t in self.trackers.values() if t.history and t.history[-1] > -82]
+        active_vars = [
+            t.stats.variance for t in self.trackers.values()
+            if t.history and t.distance_m <= self.config.max_range_m and len(t.stats.samples) >= 3
+        ]
         if not active_vars:
             return 0.0
         return sum(active_vars) / len(active_vars)
@@ -162,6 +172,8 @@ class SignalProcessor:
 
         highest_state = PresenceState.IDLE
         for t in self.trackers.values():
+            if self.config.filter_out_of_bounds and t.distance_m > self.config.max_range_m:
+                continue
             if t.state == PresenceState.INTRUSION_ALERT:
                 highest_state = PresenceState.INTRUSION_ALERT
                 break
@@ -181,6 +193,9 @@ class SignalProcessor:
                 to_delete.append(tid)
             else:
                 current_dist = tracker._estimate_distance(tracker.history[-1] if tracker.history else -60.0)
+                tracker.distance_m = current_dist
+                if self.config.filter_out_of_bounds and current_dist > self.config.max_range_m:
+                    continue
                 active.append(RadarTarget(
                     id=tracker.target_id,
                     mac_masked=tracker.mac_masked,
@@ -200,10 +215,13 @@ class SignalProcessor:
         return active
 
     def calculate_motion_score(self) -> float:
-        if not self.trackers:
+        variances = [
+            t.stats.variance for t in self.trackers.values()
+            if t.distance_m <= self.config.max_range_m and len(t.stats.samples) >= 3
+        ]
+        if not variances:
             return 0.0
-        variances = [t.stats.variance for t in self.trackers.values()]
-        max_var = max(variances) if variances else 0.0
+        max_var = max(variances)
         return min(1.0, max_var / self.config.alert_threshold)
 
     def _mask_mac(self, mac: str) -> str:

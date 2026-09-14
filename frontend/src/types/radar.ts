@@ -40,6 +40,8 @@ export interface RadarConfig {
   window_size: number;
   ema_alpha: number;
   cooldown_seconds: number;
+  max_range_m: number;
+  filter_out_of_bounds: boolean;
 }
 
 export interface CalibrationStatus {

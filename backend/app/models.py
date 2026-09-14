@@ -50,6 +50,8 @@ class RadarConfig(BaseModel):
     window_size: int = 30
     ema_alpha: float = 0.05
     cooldown_seconds: float = 2.5
+    max_range_m: float = 6.0
+    filter_out_of_bounds: bool = True
 
 class CalibrationStatus(BaseModel):
     in_progress: bool

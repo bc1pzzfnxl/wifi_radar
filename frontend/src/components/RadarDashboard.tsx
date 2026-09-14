@@ -5,7 +5,8 @@ import { SignalChart } from './SignalChart';
 import { TargetList } from './TargetList';
 import { ControlsPanel } from './ControlsPanel';
 import { Badge } from './ui/Badge';
-import { Radio, ShieldAlert, Cpu, Activity, AlertTriangle } from 'lucide-react';
+import { Card } from './ui/Card';
+import { Radio, Activity, AlertCircle, Cpu } from 'lucide-react';
 
 export const RadarDashboard: React.FC = () => {
   const [telemetry, setTelemetry] = useState<RadarTelemetry | null>(null);
@@ -18,8 +19,7 @@ export const RadarDashboard: React.FC = () => {
     alert_threshold: 8.0,
     window_size: 30,
     ema_alpha: 0.05,
-    cooldown_seconds: 2.5,
-    simulate_rf: false
+    cooldown_seconds: 2.5
   });
   const [calibration, setCalibration] = useState<CalibrationStatus | null>(null);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
@@ -35,9 +35,7 @@ export const RadarDashboard: React.FC = () => {
         const data = await res.json();
         setConfig(data);
       }
-    } catch {
-      // Offline fallback
-    }
+    } catch {}
   }, []);
 
   const handleUpdateConfig = async (newCfg: Partial<RadarConfig>) => {
@@ -49,9 +47,7 @@ export const RadarDashboard: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updated)
       });
-    } catch {
-      // Offline fallback
-    }
+    } catch {}
   };
 
   const handleTriggerCalibration = async () => {
@@ -61,9 +57,7 @@ export const RadarDashboard: React.FC = () => {
       if (res.ok) {
         setCalibration(await res.json());
       }
-    } catch {
-      // Offline fallback
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -83,18 +77,13 @@ export const RadarDashboard: React.FC = () => {
           const data: RadarTelemetry = JSON.parse(event.data);
           if (isMounted) {
             setTelemetry(data);
-            if (data.simulate_rf !== undefined && data.simulate_rf !== config.simulate_rf) {
-              setConfig((prev) => ({ ...prev, simulate_rf: data.simulate_rf }));
-            }
             const activeRssi = data.active_targets.length > 0 ? data.active_targets[0].rssi : -75;
             setHistory((prev) => {
               const next = [...prev, { time: data.timestamp, rssi: activeRssi, variance: data.global_variance }];
               return next.length > 50 ? next.slice(next.length - 50) : next;
             });
           }
-        } catch {
-          // Packet error
-        }
+        } catch {}
       };
 
       socket.onclose = () => {
@@ -118,9 +107,7 @@ export const RadarDashboard: React.FC = () => {
           const st = await res.json();
           setCalibration(st);
         }
-      } catch {
-        // Calibration poll error
-      }
+      } catch {}
     }, 3000);
 
     return () => {
@@ -130,124 +117,117 @@ export const RadarDashboard: React.FC = () => {
     };
   }, [fetchConfig]);
 
-  const isSimulating = telemetry?.simulate_rf ?? config.simulate_rf;
-
   const getGlobalBadge = (state?: string) => {
     switch (state) {
       case 'INTRUSION_ALERT':
-        return <Badge variant="danger">INTRUSION DETECTED</Badge>;
+        return <Badge variant="danger">Intrusion Detected</Badge>;
       case 'MOTION_DETECTED':
-        return <Badge variant="warning">MOTION IN ZONE</Badge>;
+        return <Badge variant="warning">Motion in Zone</Badge>;
       case 'STATIONARY_PRESENCE':
-        return <Badge variant="success">PRESENCE CONFIRMED</Badge>;
+        return <Badge variant="neutral">Presence Confirmed</Badge>;
       default:
-        return <Badge variant="outline">ZONE SECURE (IDLE)</Badge>;
+        return <Badge variant="default">Zone Secure (Idle)</Badge>;
     }
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-[#020804] text-[#e2f5e8] font-mono overflow-hidden">
-      <header className="flex items-center justify-between px-4 py-2.5 border-b border-emerald-950/80 bg-zinc-950/90 backdrop-blur-md">
+    <div className="flex flex-col h-screen max-h-screen bg-[#fafafa] text-zinc-900 font-sans overflow-hidden">
+      <header className="flex items-center justify-between px-5 py-3 border-b border-zinc-200/80 bg-white">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-emerald-400 animate-pulse" />
-            <span className="font-bold text-sm tracking-wider text-emerald-300">
+            <Radio className="w-4 h-4 text-zinc-900" />
+            <span className="font-semibold text-sm tracking-tight text-zinc-900">
               WiFi Radar HUD
             </span>
           </div>
-          <span className="text-[11px] text-zinc-500 border-l border-emerald-950 pl-3">
-            Atheros AR9271 (ath9k_htc)
+          <span className="text-[11px] font-mono text-zinc-400 border-l border-zinc-200 pl-3">
+            Atheros AR9271 · ath9k_htc
           </span>
-          <div className="flex items-center gap-2 pl-2">
-            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-rose-500 animate-ping'}`} />
-            <span className="text-[10px] text-zinc-400">
-              {connected ? 'LIVE WS' : 'CONNECTING...'}
-            </span>
+          <div className="pl-1">
+            <Badge variant={connected ? 'success' : 'danger'}>
+              {connected ? 'Live' : 'Connecting'}
+            </Badge>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-zinc-500">STATE:</span>
+            <span className="text-zinc-400 font-medium">Status:</span>
             {getGlobalBadge(telemetry?.global_state)}
           </div>
-          <div className="flex items-center gap-3 border-l border-emerald-950/80 pl-4 text-[11px]">
+          <div className="flex items-center gap-3 border-l border-zinc-200 pl-4 text-xs font-mono">
             <div>
-              <span className="text-zinc-500">TX: </span>
-              <span className="text-emerald-400 font-bold">{telemetry?.packets_injected_per_sec || 0} pkt/s</span>
+              <span className="text-zinc-400">TX: </span>
+              <span className="font-semibold text-zinc-900">{telemetry?.packets_injected_per_sec || 0} pkt/s</span>
             </div>
             <div>
-              <span className="text-zinc-500">RX: </span>
-              <span className="text-emerald-400 font-bold">{telemetry?.packets_captured_per_sec || 0} pkt/s</span>
+              <span className="text-zinc-400">RX: </span>
+              <span className="font-semibold text-zinc-900">{telemetry?.packets_captured_per_sec || 0} pkt/s</span>
             </div>
             <div>
-              <span className="text-zinc-500">CH: </span>
-              <span className="text-amber-400 font-bold">{telemetry?.channel || config.channel}</span>
+              <span className="text-zinc-400">CH: </span>
+              <span className="font-semibold text-zinc-900">{telemetry?.channel || config.channel}</span>
             </div>
           </div>
         </div>
       </header>
 
-      {telemetry?.last_error && !isSimulating && (
-        <div className="bg-rose-950/90 border-b border-rose-500/60 px-4 py-1.5 flex items-center justify-between text-xs text-rose-200">
+      {telemetry?.last_error && (
+        <div className="bg-rose-50 border-b border-rose-200 px-5 py-2 flex items-center justify-between text-xs text-rose-800">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span className="font-bold">{telemetry.last_error}</span>
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="font-medium">{telemetry.last_error}</span>
           </div>
-          <button
-            onClick={() => handleUpdateConfig({ simulate_rf: true })}
-            className="px-2 py-0.5 rounded bg-rose-800/60 hover:bg-rose-700 text-white text-[11px] underline cursor-pointer"
-          >
-            Switch to RF Simulation Mode
-          </button>
         </div>
       )}
 
-      <main className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden">
-        <div className="col-span-3 flex flex-col gap-3 h-full overflow-hidden">
-          <div className="bg-zinc-950/80 border border-emerald-950/80 rounded-lg p-3">
+      <main className="flex-1 grid grid-cols-12 gap-3.5 p-3.5 overflow-hidden">
+        <div className="col-span-3 flex flex-col gap-3.5 h-full overflow-hidden">
+          <Card className="p-3.5">
             <ControlsPanel
-              config={{ ...config, simulate_rf: isSimulating }}
+              config={config}
               calibration={calibration}
               onUpdateConfig={handleUpdateConfig}
               onTriggerCalibration={handleTriggerCalibration}
             />
-          </div>
-          <div className="bg-zinc-950/80 border border-emerald-950/80 rounded-lg p-3 flex-1 flex flex-col justify-between">
+          </Card>
+          <Card className="p-3.5 flex-1 flex flex-col justify-between">
             <div>
-              <div className="text-zinc-400 text-xs font-bold mb-2 flex items-center gap-1.5 pb-2 border-b border-emerald-950">
-                <Cpu className="w-4 h-4 text-emerald-400" />
+              <div className="text-zinc-900 text-xs font-semibold mb-3 flex items-center gap-2 pb-2.5 border-b border-zinc-100">
+                <Cpu className="w-3.5 h-3.5 text-zinc-700" />
                 <span>RF Telemetry</span>
               </div>
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Global Variance (σ²):</span>
-                  <span className="text-amber-300 font-bold">{telemetry?.global_variance || 0}</span>
+                  <span className="font-mono font-semibold text-zinc-900">{telemetry?.global_variance || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Motion Composite Score:</span>
-                  <span className="text-emerald-400 font-bold">{telemetry?.motion_score ? Math.round(telemetry.motion_score * 100) : 0}%</span>
+                  <span className="text-zinc-500">Motion Score:</span>
+                  <span className="font-mono font-semibold text-zinc-900">
+                    {telemetry?.motion_score ? Math.round(telemetry.motion_score * 100) : 0}%
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Noise Floor:</span>
-                  <span className="text-zinc-300">{telemetry?.environmental_noise ? Math.round(telemetry.environmental_noise) : -88} dBm</span>
+                  <span className="font-mono text-zinc-600">
+                    {telemetry?.environmental_noise ? Math.round(telemetry.environmental_noise) : -88} dBm
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Mode:</span>
-                  <span className={isSimulating ? 'text-amber-400' : 'text-emerald-400'}>
-                    {isSimulating ? 'Mock RF Simulation' : 'ath9k_htc Raw Injection'}
-                  </span>
+                  <span className="text-zinc-500">Hardware Driver:</span>
+                  <span className="font-mono text-zinc-800">ath9k_htc</span>
                 </div>
               </div>
             </div>
-            <div className="mt-4 pt-2 border-t border-emerald-950/60 text-[10px] text-zinc-600">
-              Active Radar Injection: Probe Frames @ {config.injection_rate}Hz
+            <div className="mt-4 pt-2.5 border-t border-zinc-100 text-[11px] text-zinc-400 font-mono">
+              Raw Injection: Probe Frames @ {config.injection_rate}Hz
             </div>
-          </div>
+          </Card>
         </div>
 
-        <div className="col-span-6 flex flex-col gap-3 h-full overflow-hidden">
-          <div className="flex-1 bg-zinc-950/80 border border-emerald-950/80 rounded-lg flex items-center justify-center p-2 relative overflow-hidden">
+        <div className="col-span-6 flex flex-col gap-3.5 h-full overflow-hidden">
+          <Card className="flex-1 flex items-center justify-center p-2 relative overflow-hidden">
             <RadarScope
               targets={telemetry?.active_targets || []}
               globalState={telemetry?.global_state || 'IDLE'}
@@ -255,18 +235,20 @@ export const RadarDashboard: React.FC = () => {
               onSelectTarget={setSelectedTargetId}
               maxDistance={15}
             />
-          </div>
+          </Card>
           <div className="h-44">
             <SignalChart history={history} config={config} height={130} />
           </div>
         </div>
 
-        <div className="col-span-3 bg-zinc-950/80 border border-emerald-950/80 rounded-lg p-3 h-full overflow-hidden flex flex-col">
-          <TargetList
-            targets={telemetry?.active_targets || []}
-            selectedTargetId={selectedTargetId}
-            onSelectTarget={setSelectedTargetId}
-          />
+        <div className="col-span-3 h-full overflow-hidden flex flex-col">
+          <Card className="h-full overflow-hidden flex flex-col p-3.5">
+            <TargetList
+              targets={telemetry?.active_targets || []}
+              selectedTargetId={selectedTargetId}
+              onSelectTarget={setSelectedTargetId}
+            />
+          </Card>
         </div>
       </main>
     </div>

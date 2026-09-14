@@ -31,7 +31,6 @@ async def get_status():
         "status": "online",
         "interface": engine.config.interface,
         "channel": engine.config.channel,
-        "simulate_rf": engine.config.simulate_rf,
         "active_targets_count": len(engine.dsp.trackers)
     }
 

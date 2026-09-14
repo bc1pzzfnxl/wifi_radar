@@ -54,34 +54,34 @@ export const SignalChart: React.FC<SignalChartProps> = ({
   const getYVar = (val: number) => padding.top + innerHeight - (Math.min(val, maxVar) / (maxVar || 1)) * innerHeight;
 
   return (
-    <div className="w-full bg-zinc-950/70 border border-emerald-950 rounded-lg p-2 font-mono flex flex-col">
-      <div className="flex items-center justify-between text-[11px] text-zinc-400 px-2 pb-1 border-b border-emerald-950/60">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-0.5 bg-emerald-400 inline-block" />
-            <span className="text-emerald-300">RSSI Waveform</span>
+    <div className="w-full bg-white border border-zinc-200/80 rounded-xl p-3 shadow-xs flex flex-col">
+      <div className="flex items-center justify-between text-xs text-zinc-500 px-1 pb-2 border-b border-zinc-100">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-0.5 bg-zinc-900 inline-block rounded-full" />
+            <span className="text-zinc-800 font-medium">RSSI Signal</span>
           </span>
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-amber-500/40 border border-amber-400 inline-block rounded-xs" />
-            <span className="text-amber-300">Rolling Variance (σ²)</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2 bg-amber-500/10 border border-amber-500/60 inline-block rounded-xs" />
+            <span className="text-zinc-600 font-medium">Variance (σ²)</span>
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-zinc-500">Threshold:</span>
-          <span className="text-amber-400 font-bold">{config.motion_threshold}</span>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-zinc-400">Motion Threshold:</span>
+          <span className="text-zinc-900 font-mono font-semibold">{config.motion_threshold}</span>
         </div>
       </div>
 
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-auto overflow-visible select-none pt-1"
+        className="w-full h-auto overflow-visible select-none pt-2"
       >
         <line
           x1={padding.left}
           y1={padding.top}
           x2={padding.left}
           y2={padding.top + innerHeight}
-          stroke="#0d381e"
+          stroke="#f1f5f9"
           strokeWidth="1"
         />
         <line
@@ -89,7 +89,7 @@ export const SignalChart: React.FC<SignalChartProps> = ({
           y1={padding.top + innerHeight}
           x2={width - padding.right}
           y2={padding.top + innerHeight}
-          stroke="#0d381e"
+          stroke="#f1f5f9"
           strokeWidth="1"
         />
 
@@ -98,10 +98,10 @@ export const SignalChart: React.FC<SignalChartProps> = ({
           y1={getYVar(config.noise_threshold)}
           x2={width - padding.right}
           y2={getYVar(config.noise_threshold)}
-          stroke="#10b981"
+          stroke="#cbd5e1"
           strokeWidth="1"
           strokeDasharray="3 3"
-          opacity="0.4"
+          opacity="0.8"
         />
         <line
           x1={padding.left}
@@ -111,14 +111,14 @@ export const SignalChart: React.FC<SignalChartProps> = ({
           stroke="#f59e0b"
           strokeWidth="1"
           strokeDasharray="4 2"
-          opacity="0.7"
+          opacity="0.8"
         />
         <line
           x1={padding.left}
           y1={getYVar(config.alert_threshold)}
           x2={width - padding.right}
           y2={getYVar(config.alert_threshold)}
-          stroke="#f43f5e"
+          stroke="#ef4444"
           strokeWidth="1"
           strokeDasharray="2 2"
           opacity="0.8"
@@ -127,7 +127,7 @@ export const SignalChart: React.FC<SignalChartProps> = ({
         {variancePath && (
           <path
             d={variancePath}
-            fill="rgba(245, 158, 11, 0.18)"
+            fill="rgba(245, 158, 11, 0.08)"
             stroke="#f59e0b"
             strokeWidth="1.5"
           />
@@ -137,15 +137,15 @@ export const SignalChart: React.FC<SignalChartProps> = ({
           <path
             d={rssiPath}
             fill="none"
-            stroke="#10b981"
+            stroke="#0f172a"
             strokeWidth="1.8"
           />
         )}
 
-        <text x={padding.left - 5} y={padding.top + 10} fill="#71717a" fontSize="9" textAnchor="end">
+        <text x={padding.left - 6} y={padding.top + 8} fill="#94a3b8" fontSize="9" textAnchor="end" fontFamily="sans-serif">
           {maxRssi}dB
         </text>
-        <text x={padding.left - 5} y={padding.top + innerHeight} fill="#71717a" fontSize="9" textAnchor="end">
+        <text x={padding.left - 6} y={padding.top + innerHeight} fill="#94a3b8" fontSize="9" textAnchor="end" fontFamily="sans-serif">
           {minRssi}dB
         </text>
       </svg>

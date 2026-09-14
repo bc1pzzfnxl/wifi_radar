@@ -3,12 +3,12 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  glow?: boolean;
+  elevated?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
   className,
-  glow = false,
+  elevated = false,
   children,
   ...props
 }) => {
@@ -16,8 +16,8 @@ export const Card: React.FC<CardProps> = ({
     <div
       className={twMerge(
         clsx(
-          'bg-zinc-950/80 backdrop-blur-md border border-emerald-900/40 rounded-lg p-4 font-mono',
-          glow && 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]',
+          'bg-white border border-zinc-200/80 rounded-xl p-4 text-zinc-900 transition-all',
+          elevated ? 'shadow-md border-zinc-300' : 'shadow-xs',
           className
         )
       )}

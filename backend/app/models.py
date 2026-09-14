@@ -38,7 +38,6 @@ class RadarTelemetry(BaseModel):
     packets_injected_per_sec: int
     packets_captured_per_sec: int
     motion_score: float
-    simulate_rf: bool = True
     last_error: Optional[str] = None
 
 class RadarConfig(BaseModel):
@@ -51,7 +50,6 @@ class RadarConfig(BaseModel):
     window_size: int = 30
     ema_alpha: float = 0.05
     cooldown_seconds: float = 2.5
-    simulate_rf: bool = True
 
 class CalibrationStatus(BaseModel):
     in_progress: bool

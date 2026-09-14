@@ -1,5 +1,4 @@
 import time
-import math
 import random
 import os
 import asyncio
@@ -16,7 +15,6 @@ class RadarEngine:
         self.injector = FrameInjector(self.config)
         self.sniffer = PacketSniffer(self.config, self._on_packet)
         self.running = False
-        self.sim_phase = 0.0
         self.calibrating = False
         self.calib_samples = []
         self.calib_target = 50
@@ -28,12 +26,11 @@ class RadarEngine:
         if self.running:
             return
         self.running = True
-        if not self.config.simulate_rf:
-            if not self._interface_exists():
-                self.injector.last_error = f"Hardware interface '{self.config.interface}' not found. Plug in AR9271 USB adapter or switch to Mock mode."
-                return
-            self.injector.start()
-            self.sniffer.start()
+        if not self._interface_exists():
+            self.injector.last_error = f"Hardware interface '{self.config.interface}' not found."
+            return
+        self.injector.start()
+        self.sniffer.start()
 
     def stop(self):
         self.running = False
@@ -44,18 +41,13 @@ class RadarEngine:
         restart_needed = (
             new_config.interface != self.config.interface
             or new_config.injection_rate != self.config.injection_rate
-            or new_config.simulate_rf != self.config.simulate_rf
         )
         self.config = new_config
         self.dsp.config = new_config
         self.injector.config = new_config
         self.sniffer.config = new_config
 
-        if new_config.simulate_rf:
-            self.injector.stop()
-            self.sniffer.stop()
-
-        if restart_needed and self.running and not new_config.simulate_rf:
+        if restart_needed and self.running:
             self.stop()
             self.start()
 
@@ -94,9 +86,6 @@ class RadarEngine:
 
     def generate_telemetry_frame(self) -> RadarTelemetry:
         now = time.time()
-        if self.config.simulate_rf:
-            self._simulate_step()
-
         active_targets = self.dsp.prune_stale_targets()
         global_var = self.dsp.global_welford.variance
         motion_score = self.dsp.calculate_motion_score()
@@ -111,7 +100,7 @@ class RadarEngine:
             elif t.state == PresenceState.STATIONARY_PRESENCE and highest_state == PresenceState.IDLE:
                 highest_state = PresenceState.STATIONARY_PRESENCE
 
-        error_msg = None if self.config.simulate_rf else (self.injector.last_error or self.sniffer.last_error)
+        error_msg = self.injector.last_error or self.sniffer.last_error
 
         return RadarTelemetry(
             timestamp=round(now, 3),
@@ -120,24 +109,8 @@ class RadarEngine:
             global_variance=round(global_var, 3),
             global_state=highest_state,
             environmental_noise=-88.0 + random.uniform(-1.5, 1.5),
-            packets_injected_per_sec=self.config.injection_rate if self.config.simulate_rf else self.injector.current_rate,
-            packets_captured_per_sec=self.config.injection_rate * 2 if self.config.simulate_rf else self.sniffer.capture_rate,
+            packets_injected_per_sec=self.injector.current_rate,
+            packets_captured_per_sec=self.sniffer.capture_rate,
             motion_score=round(motion_score, 3),
-            simulate_rf=self.config.simulate_rf,
             last_error=error_msg
         )
-
-    def _simulate_step(self):
-        self.sim_phase += 0.15
-        targets_sim = [
-            {"mac": "e4:5f:01:22:33:44", "base_rssi": -48.0, "moving": True},
-            {"mac": "a0:c5:89:11:22:33", "base_rssi": -65.0, "moving": False},
-            {"mac": "3c:22:fb:88:99:aa", "base_rssi": -74.0, "moving": False},
-        ]
-        for t in targets_sim:
-            if t["moving"]:
-                delta = math.sin(self.sim_phase) * 6.0 + random.gauss(0, 1.2)
-            else:
-                delta = random.gauss(0, 0.4)
-            rssi = t["base_rssi"] + delta
-            self._on_packet(t["mac"], rssi)

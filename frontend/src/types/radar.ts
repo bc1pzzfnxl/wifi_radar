@@ -40,7 +40,6 @@ export interface RadarConfig {
   window_size: number;
   ema_alpha: number;
   cooldown_seconds: number;
-  simulate_rf: boolean;
 }
 
 export interface CalibrationStatus {

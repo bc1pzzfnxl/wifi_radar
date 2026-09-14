@@ -34,7 +34,9 @@ export const RadarScope: React.FC<RadarScopeProps> = ({
     const handleResize = () => {
       if (!containerRef.current || !canvas) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height);
+      const w = rect.width || 400;
+      const h = rect.height > 100 ? rect.height : w;
+      const size = Math.max(260, Math.min(w, h));
       const dpr = window.devicePixelRatio || 1;
       canvas.width = size * dpr;
       canvas.height = size * dpr;

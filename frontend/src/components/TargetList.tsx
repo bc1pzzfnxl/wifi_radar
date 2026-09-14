@@ -1,7 +1,6 @@
 import React from 'react';
 import type { RadarTarget } from '../types/radar';
 import { Badge } from './ui/Badge';
-import { Radio, Activity } from 'lucide-react';
 
 interface TargetListProps {
   targets: RadarTarget[];
@@ -30,33 +29,34 @@ export const TargetList: React.FC<TargetListProps> = ({
   const getZoneColor = (zone: string) => {
     switch (zone) {
       case 'IMMEDIATE':
-        return 'text-rose-700 bg-rose-50 border-rose-200';
+        return 'text-rose-800 bg-rose-500/10 border-rose-300/40';
       case 'NEAR':
-        return 'text-amber-700 bg-amber-50 border-amber-200';
+        return 'text-amber-800 bg-amber-500/10 border-amber-300/40';
       case 'MID':
-        return 'text-zinc-700 bg-zinc-100 border-zinc-200';
+        return 'text-zinc-700 bg-zinc-100/80 border-zinc-200/70';
       default:
-        return 'text-zinc-500 bg-zinc-50 border-zinc-200';
+        return 'text-zinc-500 bg-zinc-50 border-zinc-200/60';
     }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden text-xs">
+    <div className="flex flex-col h-full overflow-hidden text-xs font-sans">
       <div className="flex items-center justify-between pb-3 border-b border-zinc-100 text-zinc-500">
-        <div className="flex items-center gap-2 font-semibold text-zinc-900 tracking-tight">
-          <Activity className="w-4 h-4 text-zinc-800" />
-          <span>Active Entities ({targets.length})</span>
+        <div>
+          <span className="font-bold text-xs uppercase tracking-wider text-zinc-950">
+            Tracked Entities
+          </span>
+          <span className="ml-2 font-mono font-bold text-xs text-zinc-400">({targets.length})</span>
         </div>
-        <span className="text-[11px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">
+        <span className="text-[11px] font-mono font-medium text-zinc-400 bg-zinc-100/80 px-2 py-0.5 rounded-md">
           ath9k_htc
         </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto mt-3 space-y-2 pr-1">
+      <div className="flex-1 overflow-y-auto mt-3 space-y-2.5 pr-1">
         {targets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-zinc-400 gap-2">
-            <Radio className="w-8 h-8 text-zinc-300 animate-pulse" />
-            <span className="text-xs">Scanning RF environment...</span>
+          <div className="flex flex-col items-center justify-center h-48 text-zinc-400">
+            <span className="text-xs font-medium">Scanning RF environment...</span>
           </div>
         ) : (
           targets.map((t) => {
@@ -65,39 +65,39 @@ export const TargetList: React.FC<TargetListProps> = ({
               <div
                 key={t.id}
                 onClick={() => onSelectTarget(isSelected ? null : t.id)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                className={`p-3 rounded-2xl border transition-all cursor-pointer select-none ${
                   isSelected
-                    ? 'bg-zinc-50 border-zinc-900 shadow-xs ring-1 ring-zinc-900/10'
-                    : 'bg-white border-zinc-200/80 hover:border-zinc-300 hover:shadow-2xs'
+                    ? 'bg-white border-zinc-950 shadow-xs ring-1 ring-zinc-950/10 scale-[1.01]'
+                    : 'bg-white/80 border-zinc-200/70 hover:border-zinc-300 hover:bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-zinc-900 font-mono text-xs">{t.id}</span>
+                    <span className="font-bold font-mono text-zinc-950 text-xs">{t.id}</span>
                     <span className="text-[10px] text-zinc-400 font-mono">{t.mac_masked}</span>
                   </div>
                   {getStateBadge(t.state)}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-zinc-100 text-[11px]">
+                <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-zinc-100/80 text-[11px]">
                   <div>
-                    <div className="text-zinc-400 text-[10px]">SIGNAL</div>
-                    <div className="font-semibold font-mono text-zinc-900">{t.rssi} dBm</div>
+                    <div className="text-zinc-400 text-[10px] font-medium">RSSI</div>
+                    <div className="font-bold font-mono text-zinc-900">{t.rssi} dBm</div>
                   </div>
                   <div>
-                    <div className="text-zinc-400 text-[10px]">VARIANCE (σ²)</div>
-                    <div className={`font-semibold font-mono ${t.variance > 4 ? 'text-amber-700' : 'text-zinc-600'}`}>
+                    <div className="text-zinc-400 text-[10px] font-medium">VARIANCE</div>
+                    <div className={`font-bold font-mono ${t.variance > 4 ? 'text-amber-700' : 'text-zinc-600'}`}>
                       {t.variance}
                     </div>
                   </div>
                   <div>
-                    <div className="text-zinc-400 text-[10px]">DISTANCE</div>
-                    <div className="font-semibold font-mono text-zinc-900">{t.distance_m}m</div>
+                    <div className="text-zinc-400 text-[10px] font-medium">DISTANCE</div>
+                    <div className="font-bold font-mono text-zinc-900">{t.distance_m}m</div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-2 pt-1">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${getZoneColor(t.zone)}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium border ${getZoneColor(t.zone)}`}>
                     {t.zone} ZONE
                   </span>
                   <span className="text-[10px] text-zinc-400 font-mono">

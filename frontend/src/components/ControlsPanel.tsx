@@ -1,7 +1,6 @@
 import React from 'react';
 import type { RadarConfig, CalibrationStatus } from '../types/radar';
 import { Button } from './ui/Button';
-import { Sliders, RefreshCw, Zap, Wifi } from 'lucide-react';
 
 interface ControlsPanelProps {
   config: RadarConfig;
@@ -17,35 +16,33 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
   onTriggerCalibration
 }) => {
   return (
-    <div className="space-y-4 text-xs">
+    <div className="space-y-4 text-xs font-sans">
       <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-        <div className="flex items-center gap-2 text-zinc-900 font-semibold tracking-tight">
-          <Sliders className="w-4 h-4 text-zinc-800" />
-          <span>Radar Parameters</span>
+        <div>
+          <span className="font-bold text-xs uppercase tracking-wider text-zinc-950">
+            Tuning & Parameters
+          </span>
         </div>
-        <span className="text-[11px] font-mono text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded">
+        <span className="text-[11px] font-mono font-medium text-zinc-400 bg-zinc-100/80 px-2 py-0.5 rounded-md">
           {config.interface}
         </span>
       </div>
 
       <div className="space-y-4">
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-zinc-600 flex items-center gap-1.5">
-              <Wifi className="w-3.5 h-3.5 text-zinc-500" />
-              WiFi Channel (2.4 GHz)
-            </span>
-            <span className="text-zinc-900 font-semibold font-mono">CH {config.channel}</span>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-zinc-500 font-medium">Channel</span>
+            <span className="text-zinc-950 font-bold font-mono text-xs">CH {config.channel}</span>
           </div>
-          <div className="grid grid-cols-6 gap-1">
+          <div className="grid grid-cols-6 gap-1.5">
             {[1, 3, 6, 8, 11, 13].map((ch) => (
               <button
                 key={ch}
                 onClick={() => onUpdateConfig({ channel: ch })}
-                className={`py-1.5 rounded-md text-center text-xs font-mono font-medium border transition-all cursor-pointer ${
+                className={`py-2 rounded-xl text-center text-xs font-mono font-bold transition-all cursor-pointer ${
                   config.channel === ch
-                    ? 'bg-zinc-900 border-zinc-900 text-white shadow-2xs'
-                    : 'bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300'
+                    ? 'bg-zinc-950 text-white shadow-xs scale-[1.02]'
+                    : 'bg-white/80 border border-zinc-200/70 text-zinc-700 hover:bg-zinc-100/80 hover:border-zinc-300'
                 }`}
               >
                 {ch}
@@ -56,11 +53,8 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <span className="text-zinc-600 flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-zinc-500" />
-              Injection Rate
-            </span>
-            <span className="text-zinc-900 font-semibold font-mono">{config.injection_rate} pkt/s</span>
+            <span className="text-zinc-500 font-medium">Injection Rate</span>
+            <span className="text-zinc-950 font-bold font-mono text-xs">{config.injection_rate} pkt/s</span>
           </div>
           <input
             type="range"
@@ -69,14 +63,14 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
             step="5"
             value={config.injection_rate}
             onChange={(e) => onUpdateConfig({ injection_rate: parseInt(e.target.value, 10) })}
-            className="w-full accent-zinc-900 bg-zinc-200 rounded-lg cursor-pointer h-1.5"
+            className="w-full accent-zinc-950 bg-zinc-200/80 rounded-lg cursor-pointer h-1.5"
           />
         </div>
 
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <span className="text-zinc-600">Motion Threshold</span>
-            <span className="text-zinc-900 font-semibold font-mono">{config.motion_threshold}</span>
+            <span className="text-zinc-500 font-medium">Motion Sensitivity</span>
+            <span className="text-zinc-950 font-bold font-mono text-xs">{config.motion_threshold}</span>
           </div>
           <input
             type="range"
@@ -85,23 +79,22 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
             step="0.5"
             value={config.motion_threshold}
             onChange={(e) => onUpdateConfig({ motion_threshold: parseFloat(e.target.value) })}
-            className="w-full accent-zinc-900 bg-zinc-200 rounded-lg cursor-pointer h-1.5"
+            className="w-full accent-zinc-950 bg-zinc-200/80 rounded-lg cursor-pointer h-1.5"
           />
         </div>
 
-        <div className="pt-3 border-t border-zinc-100">
+        <div className="pt-2">
           <Button
             variant="primary"
             size="md"
-            className="w-full justify-center shadow-xs"
+            className="w-full justify-center rounded-2xl py-2.5 font-bold shadow-xs bg-zinc-950 text-white hover:bg-zinc-850 cursor-pointer"
             onClick={onTriggerCalibration}
             disabled={calibration?.in_progress}
           >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${calibration?.in_progress ? 'animate-spin' : ''}`} />
-            {calibration?.in_progress ? 'Calibrating Baseline...' : 'Calibrate Room Baseline'}
+            <span>{calibration?.in_progress ? 'Calibrating Baseline...' : 'Calibrate Baseline'}</span>
           </Button>
           {calibration?.message && (
-            <div className="text-[11px] text-zinc-500 text-center mt-2">
+            <div className="text-[11px] text-zinc-400 text-center mt-2 font-mono">
               {calibration.message}
             </div>
           )}

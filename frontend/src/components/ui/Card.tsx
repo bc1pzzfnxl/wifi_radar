@@ -16,8 +16,8 @@ export const Card: React.FC<CardProps> = ({
     <div
       className={twMerge(
         clsx(
-          'bg-white border border-zinc-200/80 rounded-xl p-4 text-zinc-900 transition-all',
-          elevated ? 'shadow-md border-zinc-300' : 'shadow-xs',
+          'bg-white/75 backdrop-blur-xl border border-white/90 rounded-3xl p-5 text-zinc-950 shadow-[0_4px_24px_rgba(0,0,0,0.03)] ring-1 ring-zinc-900/5 transition-all',
+          elevated && 'shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-zinc-900/10',
           className
         )
       )}

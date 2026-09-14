@@ -54,7 +54,7 @@ export const SignalChart: React.FC<SignalChartProps> = ({
   const getYVar = (val: number) => padding.top + innerHeight - (Math.min(val, maxVar) / (maxVar || 1)) * innerHeight;
 
   return (
-    <div className="w-full bg-white border border-zinc-200/80 rounded-xl p-3 shadow-xs flex flex-col">
+    <div className="w-full bg-white/75 backdrop-blur-xl border border-white/90 rounded-3xl p-4 shadow-[0_4px_24px_rgba(0,0,0,0.03)] ring-1 ring-zinc-900/5 flex flex-col">
       <div className="flex items-center justify-between text-xs text-zinc-500 px-1 pb-2 border-b border-zinc-100">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">

@@ -1,7 +1,7 @@
 import asyncio
 import json
 from contextlib import asynccontextmanager
-from typing import List
+from typing import List, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from .models import RadarConfig, RadarTelemetry, CalibrationStatus, RadarTarget
@@ -40,8 +40,13 @@ async def get_config():
     return engine.config
 
 @app.post("/api/config", response_model=RadarConfig)
-async def update_config(cfg: RadarConfig):
-    engine.update_config(cfg)
+async def update_config(data: Dict[str, Any]):
+    current = engine.config.model_dump()
+    for k, v in data.items():
+        if k in current:
+            current[k] = v
+    new_cfg = RadarConfig(**current)
+    engine.update_config(new_cfg)
     return engine.config
 
 @app.post("/api/calibrate")

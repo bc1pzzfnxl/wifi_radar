@@ -40,7 +40,7 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
               <button
                 key={ch}
                 onClick={() => onUpdateConfig({ channel: ch })}
-                className={`py-1 rounded text-center border transition-all ${
+                className={`py-1 rounded text-center border transition-all cursor-pointer ${
                   config.channel === ch
                     ? 'bg-emerald-600/30 border-emerald-400 text-white font-bold'
                     : 'bg-zinc-900/50 border-emerald-950 text-zinc-400 hover:border-emerald-800'
@@ -87,18 +87,35 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
           />
         </div>
 
-        <div className="pt-2 border-t border-emerald-950/60 flex items-center justify-between">
-          <span className="text-zinc-400">RF Simulation Mode</span>
-          <button
-            onClick={() => onUpdateConfig({ simulate_rf: !config.simulate_rf })}
-            className={`px-2.5 py-1 rounded text-[11px] border transition-all ${
-              config.simulate_rf
-                ? 'bg-amber-950/50 border-amber-500 text-amber-300 font-bold'
-                : 'bg-zinc-900 border-zinc-700 text-zinc-500'
-            }`}
-          >
-            {config.simulate_rf ? 'ACTIVE (MOCK)' : 'HARDWARE (AR9271)'}
-          </button>
+        <div className="pt-2 border-t border-emerald-950/60 space-y-1.5">
+          <div className="flex justify-between text-zinc-400">
+            <span>Operating Mode</span>
+            <span className={config.simulate_rf ? 'text-amber-300 font-bold' : 'text-emerald-400 font-bold'}>
+              {config.simulate_rf ? 'MOCK SIMULATION' : 'HARDWARE (AR9271)'}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              onClick={() => onUpdateConfig({ simulate_rf: true })}
+              className={`py-1.5 px-2 rounded text-[11px] font-bold border transition-all cursor-pointer ${
+                config.simulate_rf
+                  ? 'bg-amber-600/30 border-amber-400 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+              }`}
+            >
+              Mock Simulation
+            </button>
+            <button
+              onClick={() => onUpdateConfig({ simulate_rf: false })}
+              className={`py-1.5 px-2 rounded text-[11px] font-bold border transition-all cursor-pointer ${
+                !config.simulate_rf
+                  ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+              }`}
+            >
+              Hardware (AR9271)
+            </button>
+          </div>
         </div>
 
         <div className="pt-2">

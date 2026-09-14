@@ -1,6 +1,7 @@
 import time
 import math
 import random
+import os
 import asyncio
 from typing import List, Optional
 from .models import RadarConfig, RadarTelemetry, PresenceState, CalibrationStatus
@@ -20,11 +21,17 @@ class RadarEngine:
         self.calib_samples = []
         self.calib_target = 50
 
+    def _interface_exists(self) -> bool:
+        return os.path.exists(f"/sys/class/net/{self.config.interface}")
+
     def start(self):
         if self.running:
             return
         self.running = True
         if not self.config.simulate_rf:
+            if not self._interface_exists():
+                self.injector.last_error = f"Hardware interface '{self.config.interface}' not found. Plug in AR9271 USB adapter or switch to Mock mode."
+                return
             self.injector.start()
             self.sniffer.start()
 

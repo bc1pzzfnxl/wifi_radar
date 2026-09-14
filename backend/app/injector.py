@@ -13,12 +13,14 @@ class FrameInjector:
         self.rate_counter = 0
         self.last_rate_check = time.time()
         self.current_rate = 0
+        self.last_error: Optional[str] = None
         self.src_mac = "00:c0:ca:97:d2:fb"
 
     def start(self):
         if self.running:
             return
         self.running = True
+        self.last_error = None
         self.thread = threading.Thread(target=self._run_loop, daemon=True)
         self.thread.start()
 
@@ -42,8 +44,9 @@ class FrameInjector:
                 sendp(frame, iface=self.config.interface, count=1, verbose=False)
                 self.packets_sent += 1
                 self.rate_counter += 1
-            except Exception:
-                pass
+                self.last_error = None
+            except Exception as e:
+                self.last_error = f"Injection error: {e}"
 
             now = time.time()
             if now - self.last_rate_check >= 1.0:

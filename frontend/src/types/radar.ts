@@ -27,6 +27,7 @@ export interface RadarTelemetry {
   packets_injected_per_sec: number;
   packets_captured_per_sec: number;
   motion_score: number;
+  last_error?: string | null;
 }
 
 export interface RadarConfig {

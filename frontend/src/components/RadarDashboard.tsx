@@ -5,7 +5,7 @@ import { SignalChart } from './SignalChart';
 import { TargetList } from './TargetList';
 import { ControlsPanel } from './ControlsPanel';
 import { Badge } from './ui/Badge';
-import { Radio, ShieldAlert, Cpu, Activity, Signal, Wifi } from 'lucide-react';
+import { Radio, ShieldAlert, Cpu, Activity, AlertTriangle } from 'lucide-react';
 
 export const RadarDashboard: React.FC = () => {
   const [telemetry, setTelemetry] = useState<RadarTelemetry | null>(null);
@@ -19,7 +19,7 @@ export const RadarDashboard: React.FC = () => {
     window_size: 30,
     ema_alpha: 0.05,
     cooldown_seconds: 2.5,
-    simulate_rf: true
+    simulate_rf: false
   });
   const [calibration, setCalibration] = useState<CalibrationStatus | null>(null);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
@@ -182,6 +182,21 @@ export const RadarDashboard: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {telemetry?.last_error && !config.simulate_rf && (
+        <div className="bg-rose-950/90 border-b border-rose-500/60 px-4 py-1.5 flex items-center justify-between text-xs text-rose-200">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span className="font-bold">{telemetry.last_error}</span>
+          </div>
+          <button
+            onClick={() => handleUpdateConfig({ simulate_rf: true })}
+            className="px-2 py-0.5 rounded bg-rose-800/60 hover:bg-rose-700 text-white text-[11px] underline cursor-pointer"
+          >
+            Switch to RF Simulation Mode
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden">
         <div className="col-span-3 flex flex-col gap-3 h-full overflow-hidden">

@@ -25,11 +25,8 @@ class RadarEngine:
             return
         self.running = True
         if not self.config.simulate_rf:
-            try:
-                self.injector.start()
-                self.sniffer.start()
-            except Exception:
-                self.config.simulate_rf = True
+            self.injector.start()
+            self.sniffer.start()
 
     def stop(self):
         self.running = False
@@ -103,6 +100,8 @@ class RadarEngine:
             elif t.state == PresenceState.STATIONARY_PRESENCE and highest_state == PresenceState.IDLE:
                 highest_state = PresenceState.STATIONARY_PRESENCE
 
+        error_msg = self.injector.last_error or self.sniffer.last_error
+
         return RadarTelemetry(
             timestamp=round(now, 3),
             channel=self.config.channel,
@@ -112,7 +111,8 @@ class RadarEngine:
             environmental_noise=-88.0 + random.uniform(-1.5, 1.5),
             packets_injected_per_sec=self.config.injection_rate if self.config.simulate_rf else self.injector.current_rate,
             packets_captured_per_sec=self.config.injection_rate * 2 if self.config.simulate_rf else self.sniffer.capture_rate,
-            motion_score=round(motion_score, 3)
+            motion_score=round(motion_score, 3),
+            last_error=error_msg
         )
 
     def _simulate_step(self):

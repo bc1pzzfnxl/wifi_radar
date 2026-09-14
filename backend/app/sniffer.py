@@ -12,6 +12,7 @@ class PacketSniffer:
         self.thread: Optional[threading.Thread] = None
         self.packets_captured = 0
         self.capture_rate = 0
+        self.last_error: Optional[str] = None
         self._rate_counter = 0
         self._last_rate_time = time.time()
 
@@ -19,6 +20,7 @@ class PacketSniffer:
         if self.running:
             return
         self.running = True
+        self.last_error = None
         self.thread = threading.Thread(target=self._run_sniff, daemon=True)
         self.thread.start()
 
@@ -62,5 +64,6 @@ class PacketSniffer:
                 store=False,
                 stop_filter=lambda p: not self.running
             )
-        except Exception:
+        except Exception as e:
+            self.last_error = f"Sniffer error: {e}"
             self.running = False

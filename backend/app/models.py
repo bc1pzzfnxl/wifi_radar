@@ -38,6 +38,7 @@ class RadarTelemetry(BaseModel):
     packets_injected_per_sec: int
     packets_captured_per_sec: int
     motion_score: float
+    last_error: Optional[str] = None
 
 class RadarConfig(BaseModel):
     interface: str = "wlan1"

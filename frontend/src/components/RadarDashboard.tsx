@@ -83,6 +83,9 @@ export const RadarDashboard: React.FC = () => {
           const data: RadarTelemetry = JSON.parse(event.data);
           if (isMounted) {
             setTelemetry(data);
+            if (data.simulate_rf !== undefined && data.simulate_rf !== config.simulate_rf) {
+              setConfig((prev) => ({ ...prev, simulate_rf: data.simulate_rf }));
+            }
             const activeRssi = data.active_targets.length > 0 ? data.active_targets[0].rssi : -75;
             setHistory((prev) => {
               const next = [...prev, { time: data.timestamp, rssi: activeRssi, variance: data.global_variance }];
@@ -126,6 +129,8 @@ export const RadarDashboard: React.FC = () => {
       if (wsRef.current) wsRef.current.close();
     };
   }, [fetchConfig]);
+
+  const isSimulating = telemetry?.simulate_rf ?? config.simulate_rf;
 
   const getGlobalBadge = (state?: string) => {
     switch (state) {
@@ -183,7 +188,7 @@ export const RadarDashboard: React.FC = () => {
         </div>
       </header>
 
-      {telemetry?.last_error && !config.simulate_rf && (
+      {telemetry?.last_error && !isSimulating && (
         <div className="bg-rose-950/90 border-b border-rose-500/60 px-4 py-1.5 flex items-center justify-between text-xs text-rose-200">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
@@ -202,7 +207,7 @@ export const RadarDashboard: React.FC = () => {
         <div className="col-span-3 flex flex-col gap-3 h-full overflow-hidden">
           <div className="bg-zinc-950/80 border border-emerald-950/80 rounded-lg p-3">
             <ControlsPanel
-              config={config}
+              config={{ ...config, simulate_rf: isSimulating }}
               calibration={calibration}
               onUpdateConfig={handleUpdateConfig}
               onTriggerCalibration={handleTriggerCalibration}
@@ -229,8 +234,8 @@ export const RadarDashboard: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Mode:</span>
-                  <span className={config.simulate_rf ? 'text-amber-400' : 'text-emerald-400'}>
-                    {config.simulate_rf ? 'Mock RF Simulation' : 'ath9k_htc Raw Injection'}
+                  <span className={isSimulating ? 'text-amber-400' : 'text-emerald-400'}>
+                    {isSimulating ? 'Mock RF Simulation' : 'ath9k_htc Raw Injection'}
                   </span>
                 </div>
               </div>

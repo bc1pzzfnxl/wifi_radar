@@ -26,8 +26,10 @@ class PacketSniffer:
 
     def stop(self):
         self.running = False
+        self.last_error = None
+        self.capture_rate = 0
         if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=1.0)
+            self.thread.join(timeout=0.5)
         self.thread = None
 
     def _run_sniff(self):
@@ -65,5 +67,6 @@ class PacketSniffer:
                 stop_filter=lambda p: not self.running
             )
         except Exception as e:
-            self.last_error = f"Sniffer error: {e}"
+            if self.running:
+                self.last_error = f"Sniffer error: {e}"
             self.running = False

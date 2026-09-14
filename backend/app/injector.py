@@ -26,8 +26,10 @@ class FrameInjector:
 
     def stop(self):
         self.running = False
+        self.last_error = None
+        self.current_rate = 0
         if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=1.0)
+            self.thread.join(timeout=0.5)
         self.thread = None
 
     def _run_loop(self):
@@ -46,7 +48,8 @@ class FrameInjector:
                 self.rate_counter += 1
                 self.last_error = None
             except Exception as e:
-                self.last_error = f"Injection error: {e}"
+                if self.running:
+                    self.last_error = f"Injection error: {e}"
 
             now = time.time()
             if now - self.last_rate_check >= 1.0:

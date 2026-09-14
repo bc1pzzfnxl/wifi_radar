@@ -43,6 +43,23 @@ class ExponentialMovingAverage:
     def reset(self):
         self.value = None
 
+class RollingWindowStats:
+    def __init__(self, maxlen: int = 30):
+        self.samples = deque(maxlen=maxlen)
+
+    def update(self, value: float):
+        self.samples.append(value)
+
+    @property
+    def variance(self) -> float:
+        if len(self.samples) < 3:
+            return 0.0
+        mean = sum(self.samples) / len(self.samples)
+        return sum((x - mean) ** 2 for x in self.samples) / (len(self.samples) - 1)
+
+    def reset(self):
+        self.samples.clear()
+
 class TargetTracker:
     def __init__(self, target_id: str, mac_masked: str, config: RadarConfig):
         self.target_id = target_id
@@ -50,7 +67,8 @@ class TargetTracker:
         self.config = config
         self.history = deque(maxlen=config.window_size)
         self.ema = ExponentialMovingAverage(alpha=config.ema_alpha)
-        self.welford = WelfordStats()
+        self.stats = RollingWindowStats(maxlen=config.window_size)
+        self.welford = self.stats
         self.state = PresenceState.IDLE
         self.last_state_change = time.time()
         self.last_seen = time.time()
@@ -64,8 +82,8 @@ class TargetTracker:
         baseline = self.ema.update(rssi)
         delta = rssi - baseline
         
-        self.welford.update(delta)
-        variance = self.welford.variance
+        self.stats.update(delta)
+        variance = self.stats.variance
 
         if variance > self.config.alert_threshold:
             candidate_state = PresenceState.INTRUSION_ALERT
@@ -123,6 +141,13 @@ class SignalProcessor:
         self.global_welford = WelfordStats()
         self.calibration_baseline = 0.0
 
+    @property
+    def global_variance(self) -> float:
+        active_vars = [t.stats.variance for t in self.trackers.values() if t.history and t.history[-1] > -82]
+        if not active_vars:
+            return 0.0
+        return sum(active_vars) / len(active_vars)
+
     def process_packet(self, mac: str, rssi: float) -> Tuple[RadarTarget, float, PresenceState]:
         masked_mac = self._mask_mac(mac)
         target_id = f"tgt_{abs(hash(mac)) % 10000:04d}"
@@ -133,8 +158,7 @@ class SignalProcessor:
         tracker = self.trackers[target_id]
         target = tracker.add_sample(rssi)
 
-        self.global_welford.update(target.delta_rssi)
-        global_var = self.global_welford.variance
+        global_var = self.global_variance
 
         highest_state = PresenceState.IDLE
         for t in self.trackers.values():
@@ -163,7 +187,7 @@ class SignalProcessor:
                     rssi=round(tracker.history[-1], 1) if tracker.history else -60.0,
                     baseline_rssi=round(tracker.ema.value or -60.0, 1),
                     delta_rssi=round((tracker.history[-1] - tracker.ema.value) if (tracker.history and tracker.ema.value) else 0.0, 2),
-                    variance=round(tracker.welford.variance, 3),
+                    variance=round(tracker.stats.variance, 3),
                     state=tracker.state,
                     zone=tracker._estimate_zone(current_dist),
                     confidence=0.5,
@@ -178,8 +202,8 @@ class SignalProcessor:
     def calculate_motion_score(self) -> float:
         if not self.trackers:
             return 0.0
-        variances = [t.welford.variance for t in self.trackers.values()]
-        max_var = max(variances)
+        variances = [t.stats.variance for t in self.trackers.values()]
+        max_var = max(variances) if variances else 0.0
         return min(1.0, max_var / self.config.alert_threshold)
 
     def _mask_mac(self, mac: str) -> str:

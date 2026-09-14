@@ -87,7 +87,7 @@ class RadarEngine:
     def generate_telemetry_frame(self) -> RadarTelemetry:
         now = time.time()
         active_targets = self.dsp.prune_stale_targets()
-        global_var = self.dsp.global_welford.variance
+        global_var = self.dsp.global_variance
         motion_score = self.dsp.calculate_motion_score()
 
         highest_state = PresenceState.IDLE
